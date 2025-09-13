@@ -9,32 +9,31 @@ export default async function handler(req, res) {
     return res.status(400).json({ roast: "Name and details are required." });
   }
 
+  const GROQ_API_KEY = process.env.GROQ_API_KEY; // <--- load from env
+
   try {
-    // Correct HF Space endpoint
-    const hfResponse = await fetch(
-      "https://hf.space/embed/tokyo97/roastbot-backend/api/predict/", 
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fn_index: 0,
-          data: [name, details, style]
-        })
-      }
-    );
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        messages: [
+          {
+            role: "user",
+            content: `You are a witty comedian. Roast ${name} in a ${style} and clever way. Details: ${details}. Output ONE short sentence, light-hearted, not offensive.`
+          }
+        ]
+      })
+    });
 
-    const hfData = await hfResponse.json();
-
-    const roast = hfData?.data?.[0];
-    if (!roast) {
-      console.error("HF API returned invalid response:", hfData);
-      return res.status(500).json({ roast: "HF API returned no valid roast." });
-    }
+    const data = await response.json();
+    const roast = data?.choices?.[0]?.message?.content?.trim() || "No roast generated.";
 
     res.status(200).json({ roast });
 
   } catch (err) {
-    console.error("HF API call failed:", err);
-    res.status(500).json({ roast: "Error generating roast. Please try later." });
-  }
-}
+    console.error("Groq API call failed:", err);
+    res.status(500).json
