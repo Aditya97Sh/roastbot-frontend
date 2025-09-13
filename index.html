@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Roast Bot</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 600px; margin: auto; }
+        input, textarea, select, button { width: 100%; padding: 10px; margin: 5px 0; }
+        #roast { margin-top: 20px; font-weight: bold; color: #ff4d4d; }
+    </style>
+</head>
+<body>
+    <h1>Roast Bot</h1>
+    <input type="text" id="name" placeholder="Name or nickname">
+    <textarea id="details" placeholder="Details / quirks"></textarea>
+    <select id="style">
+        <option value="playful">Playful</option>
+        <option value="sarcastic">Sarcastic</option>
+        <option value="dramatic">Dramatic</option>
+    </select>
+    <button onclick="getRoast()">Generate Roast 🔥</button>
+    <div id="roast"></div>
+
+    <script>
+        async function getRoast() {
+            const name = document.getElementById("name").value;
+            const details = document.getElementById("details").value;
+            const style = document.getElementById("style").value;
+
+            const response = await fetch("https://YOUR-HF-SPACE-URL/roast", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, details, style })
+            });
+
+            const data = await response.json();
+            document.getElementById("roast").innerText = data.roast;
+        }
+    </script>
+</body>
+</html>
