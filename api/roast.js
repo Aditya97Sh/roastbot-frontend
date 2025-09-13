@@ -1,31 +1,34 @@
-import fetch from "node-fetch";
-
 export default async function handler(req, res) {
-    if (req.method === "POST") {
-        const { name, details, style } = req.body;
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Method not allowed" });
+    }
 
-        try {
-            // Call your Hugging Face Space predict API
-            const response = await fetch(
-                "https://tokyo97-roastbot-backend.hf.space/api/predict/", 
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        fn_index: 0,
-                        data: [name, details, style]
-                    })
-                }
-            );
+    const { name, details, style } = req.body;
 
-            const result = await response.json();
-            res.status(200).json({ roast: result.data[0] });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ roast: "Error generating roast. Please try later." });
-        }
+    if (!name || !details) {
+        return res.status(400).json({ roast: "Name and details are required." });
+    }
 
-    } else {
-        res.status(405).json({ error: "Method not allowed" });
+    try {
+        const response = await fetch(
+            "https://tokyo97-roastbot-backend.hf.space/api/predict/", 
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    fn_index: 0,  // Gradio predict function index
+                    data: [name, details, style]
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        // Gradio returns result in data[0]
+        res.status(200).json({ roast: data.data[0] || "No roast generated." });
+
+    } catch (error) {
+        console.error("HF API call failed:", error);
+        res.status(500).json({ roast: "Error generating roast. Please try later." });
     }
 }
