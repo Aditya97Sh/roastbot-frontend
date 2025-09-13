@@ -32,17 +32,15 @@
             }
 
             try {
-                const response = await fetch("https://tokyo97-roastbot-backend.hf.space/api/predict/", {
+                // Call your Vercel serverless function
+                const response = await fetch("/api/roast", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        fn_index: 0,
-                        data: [name, details, style]
-                    })
+                    body: JSON.stringify({ name, details, style })
                 });
 
-                const result = await response.json();
-                document.getElementById("roast").innerText = result.data[0] || "No roast generated.";
+                const data = await response.json();
+                document.getElementById("roast").innerText = data.roast || "No roast generated.";
             } catch (err) {
                 console.error(err);
                 document.getElementById("roast").innerText = "Error generating roast. Please try later.";
