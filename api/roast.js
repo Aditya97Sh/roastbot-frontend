@@ -10,8 +10,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Correct HF Space endpoint
     const hfResponse = await fetch(
-      "https://tokyo97-roastbot-backend.hf.space/api/predict/",
+      "https://hf.space/embed/tokyo97/roastbot-backend/api/predict/", 
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
