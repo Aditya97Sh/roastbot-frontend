@@ -1,4 +1,6 @@
-export default async function handler(req, res) {
+const fetch = require("node-fetch");
+
+module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -9,10 +11,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ roast: "Name and details are required." });
   }
 
-  const GROQ_API_KEY = process.env.GROQ_API_KEY; // <--- load from env
-
   try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
+    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -23,17 +25,24 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "user",
-            content: `You are a witty comedian. Roast ${name} in a ${style} and clever way. Details: ${details}. Output ONE short sentence, light-hearted, not offensive.`
+            content: `You are a witty comedian. Roast ${name} in a ${style}, funny and clever way. Details: ${details}. Output ONE short, light-hearted sentence.`
           }
         ]
       })
     });
 
-    const data = await response.json();
-    const roast = data?.choices?.[0]?.message?.content?.trim() || "No roast generated.";
+    const data = await groqResponse.json();
+    const roast = data?.choices?.[0]?.message?.content?.trim();
+
+    if (!roast) {
+      console.error("Groq API returned invalid response:", data);
+      return res.status(500).json({ roast: "Groq API returned no valid roast." });
+    }
 
     res.status(200).json({ roast });
 
   } catch (err) {
     console.error("Groq API call failed:", err);
-    res.status(500).json
+    res.status(500).json({ roast: "Error generating roast. Please try later." });
+  }
+};
