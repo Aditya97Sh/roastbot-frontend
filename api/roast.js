@@ -1,6 +1,6 @@
 const fetch = require("node-fetch");
 
-module.exports = async function (req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -12,37 +12,34 @@ module.exports = async function (req, res) {
   }
 
   try {
-    const GROQ_API_KEY = process.env.GROQ_API_KEY;
+    // Call Groq API or HF backend
+    const hfResponse = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions", 
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-4-scout-17b-16e-instruct",
+          messages: [
+            {
+              role: "user",
+              content: `Roast ${name} in a ${style} way. Details: ${details}. Output ONE short sentence, light-hearted.`
+            }
+          ]
+        })
+      }
+    );
 
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
-        messages: [
-          {
-            role: "user",
-            content: `You are a witty comedian. Roast ${name} in a ${style}, funny and clever way. Details: ${details}. Output ONE short, light-hearted sentence.`
-          }
-        ]
-      })
-    });
-
-    const data = await groqResponse.json();
-    const roast = data?.choices?.[0]?.message?.content?.trim();
-
-    if (!roast) {
-      console.error("Groq API returned invalid response:", data);
-      return res.status(500).json({ roast: "Groq API returned no valid roast." });
-    }
+    const hfData = await hfResponse.json();
+    const roast = hfData?.choices?.[0]?.message?.content || "No roast generated.";
 
     res.status(200).json({ roast });
 
   } catch (err) {
-    console.error("Groq API call failed:", err);
+    console.error("API call failed:", err);
     res.status(500).json({ roast: "Error generating roast. Please try later." });
   }
 };
